@@ -1,34 +1,39 @@
 void io_hlt(void);
-
 void io_cli(void);
-
 void io_out8(int port, int data);
-
 int io_load_eflags(void);
-
 void io_store_eflags(int eflags);
-
 void init_palette(void);
-
 void set_palette(int start, int end, unsigned char *rgb);
+void boxfill8(unsigned char *vram, int xsize, unsigned char c, int x0, int y0, int x1, int y1);
 
-void write_mem8(int addr, int data);
+#define COL8_000000		0
+#define COL8_FF0000		1
+#define COL8_00FF00		2
+#define COL8_FFFF00		3
+#define COL8_0000FF		4
+#define COL8_FF00FF		5
+#define COL8_00FFFF		6
+#define COL8_FFFFFF		7
+#define COL8_C6C6C6		8
+#define COL8_840000		9
+#define COL8_008400		10
+#define COL8_848400		11
+#define COL8_000084		12
+#define COL8_840084		13
+#define COL8_008484		14
+#define COL8_848484		15
 
 void HariMain(void) {
-    // int i;
-    // for (i = 0xa0000; i <= 0xaffff; i++) {
-    // 	write_mem8(i, i & 0x0f);
-    // }
-    int i;
-    char *p; // p是BYTE [...]用的地址
+    char *p;
 
     init_palette(); // 设定调色板
 
     p = (char *) 0xa0000; // 指定地址
 
-    for (i = 0; i <= 0xffff; i++) {
-        p[i] = i & 0x0f;
-    }
+	boxfill8(p, 320, COL8_FF0000,  20,  20, 120, 120);
+	boxfill8(p, 320, COL8_00FF00,  70,  50, 170, 150);
+	boxfill8(p, 320, COL8_0000FF, 120,  80, 220, 180);
 
     for (;;) {
         io_hlt();
@@ -60,6 +65,10 @@ void init_palette(void) {
     // static char 只能用于数据，相当于汇编中的DB指令
 }
 
+// 256色同屏，每个点只有0-255的调色板索引，具体什么颜色
+// 需要查找一个256*3=768字节的调色板（每个索引3个字节RGB）
+// 设置一个颜色的调色盘需要向向 0x03c8 写入颜色编号
+// 接着在 0x03c9 端口依次写入R、G、B三个分量的具体数值
 void set_palette(int start, int end, unsigned char *rgb) {
     int i, eflags;
     eflags = io_load_eflags();    // 记录中断许可标志位
@@ -73,4 +82,13 @@ void set_palette(int start, int end, unsigned char *rgb) {
     }
     io_store_eflags(eflags);    // 复原中断许可标志
     return;
+}
+
+void boxfill8(unsigned char *vram, int xsize, unsigned char c, int x0, int y0, int x1, int y1) {
+	int x, y;
+	for (y = y0; y <= y1; y++) {
+		for (x = x0; x <= x1; x++)
+			vram[y * xsize + x] = c;
+	}
+	return;
 }
