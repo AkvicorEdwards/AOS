@@ -18,23 +18,11 @@ DEL      = del
 default :
 	$(MAKE) img
 
-ipl10.bin : ipl.nas
+ipl.bin : ipl.nas
 	$(NASK) ipl.nas ipl.bin ipl.lst
 
 asmhead.bin : asmhead.nas
 	$(NASK) asmhead.nas asmhead.bin asmhead.lst
-
-bootpack.gas : bootpack.c
-	$(CC1) -o bootpack.gas bootpack.c
-
-bootpack.nas : bootpack.gas
-	$(GAS2NASK) bootpack.gas bootpack.nas
-
-bootpack.obj : bootpack.nas
-	$(NASK) bootpack.nas bootpack.obj bootpack.lst
-
-naskfunc.obj : naskfunc.nas
-	$(NASK) naskfunc.nas naskfunc.obj naskfunc.lst
 
 hankaku.bin : hankaku.txt
 	$(MAKEFONT) hankaku.txt hankaku.bin
@@ -42,9 +30,9 @@ hankaku.bin : hankaku.txt
 hankaku.obj : hankaku.bin
 	$(BIN2OBJ) hankaku.bin hankaku.obj _hankaku
 
-bootpack.bim : bootpack.obj naskfunc.obj hankaku.obj
+bootpack.bim : bootpack.obj naskfunc.obj hankaku.obj graphic.obj dsctbl.obj
 	$(OBJ2BIM) @$(RULEFILE) out:bootpack.bim stack:3136k map:bootpack.map \
-		bootpack.obj naskfunc.obj hankaku.obj
+		bootpack.obj naskfunc.obj hankaku.obj graphic.obj dsctbl.obj
 # 3MB+64KB=3136KB
 
 bootpack.hrb : bootpack.bim
@@ -53,11 +41,20 @@ bootpack.hrb : bootpack.bim
 haribote.sys : asmhead.bin bootpack.hrb
 	copy /B asmhead.bin+bootpack.hrb haribote.sys
 
-haribote.img : ipl10.bin haribote.sys
+haribote.img : ipl.bin haribote.sys
 	$(EDIMG)   imgin:../z_tools/fdimg0at.tek \
 		wbinimg src:ipl.bin len:512 from:0 to:0 \
 		copy from:haribote.sys to:@: \
 		imgout:haribote.img
+
+%.gas : %.c
+	$(CC1) -o $*.gas $*.c
+
+%.nas : %.gas
+	$(GAS2NASK) $*.gas $*.nas
+
+%.obj : %.nas
+	$(NASK) $*.nas $*.obj $*.lst
 
 img :
 	$(MAKE) haribote.img

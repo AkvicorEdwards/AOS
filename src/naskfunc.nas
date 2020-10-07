@@ -79,10 +79,14 @@ _io_store_eflags:	; void io_store_eflags(int eflags);
 		POPFD		; POP EFLAGS
 		RET
 
+				; 将段的上限和地址值赋给名为GDTR的48位寄存器
+				; 唯一的赋值方法是,从指定地址读取6字节(48位)。
+				; 然后赋值给GDTR寄存器
+				; 该寄存器低16位是段上限,剩下高32位代表GDT的开始地址
 _load_gdtr:		; void load_gdtr(int limit, int addr);
 		MOV		AX,[ESP+4]		; limit
-		MOV		[ESP+6],AX
-		LGDT	[ESP+6]
+		MOV		[ESP+6],AX		; 先把上限后移两位
+		LGDT	[ESP+6]			; 然后在直接读6字节
 		RET
 
 _load_idtr:		; void load_idtr(int limit, int addr);
