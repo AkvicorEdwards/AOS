@@ -19,29 +19,6 @@ void init_pic(void) {
 	io_out8(PIC1_IMR,  0xff  ); // 11111111 禁止所有中断
 }
 
-#define PORT_KEYDAT		0x0060
-
-struct FIFO8 keyfifo;
-
-// 来自PS/2键盘的中断
-void inthandler21(int *esp) {
-    unsigned char data;
-    io_out8(PIC0_OCW2, 0x61); // 通知PIC"IRQ-01已经受理完毕"
-    data = io_in8(PORT_KEYDAT);
-	fifo8_put(&keyfifo, data);
-}
-
-struct FIFO8 mousefifo;
-
-// 来自PS/2鼠标的中断
-void inthandler2c(int *esp) {
-	unsigned char data;
-	io_out8(PIC1_OCW2, 0x64); // 通知PIC IRQ-12 已经受理完毕
-	io_out8(PIC0_OCW2, 0x62); // 通知PIC IRQ-02 已经受理完毕
-	data = io_in8(PORT_KEYDAT);
-	fifo8_put(&mousefifo, data);
-}
-
 // PIC0中断的不完整策略
 // 这个中断在Athlon64X2上通过芯片组提供的便利，只需执行一次
 // 这个中断只是接收，不执行任何操作
