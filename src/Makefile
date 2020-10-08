@@ -16,7 +16,7 @@ COPY     = copy
 DEL      = del
 
 OBJS_BOOTPACK = bootpack.obj naskfunc.obj hankaku.obj graphic.obj dsctbl.obj \
-		int.obj fifo.obj keyboard.obj mouse.obj memory.obj
+		int.obj fifo.obj keyboard.obj mouse.obj memory.obj sheet.obj
 
 default :
 	$(MAKE) img
