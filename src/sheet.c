@@ -86,7 +86,7 @@ void sheet_refreshsub(struct SHTCTL *ctl, int vx0, int vy0, int vx1, int vy1, in
 	unsigned char *buf, *vram = ctl->vram, *map = ctl->map, sid;
 	struct SHEET *sht;
     // 如果refresh的范围超出了画面则修正
-    if (vx0 < 0) { vx0 = 0; }
+	if (vx0 < 0) { vx0 = 0; }
 	if (vy0 < 0) { vy0 = 0; }
 	if (vx1 > ctl->xsize) { vx1 = ctl->xsize; }
 	if (vy1 > ctl->ysize) { vy1 = ctl->ysize; }
@@ -103,7 +103,6 @@ void sheet_refreshsub(struct SHTCTL *ctl, int vx0, int vy0, int vx1, int vy1, in
 		if (by0 < 0) { by0 = 0; }
 		if (bx1 > sht->bxsize) { bx1 = sht->bxsize; } // 应对不同的重叠方式
 		if (by1 > sht->bysize) { by1 = sht->bysize; }
-
 		for (by = by0; by < by1; by++) {
 			vy = sht->vy0 + by;
 			for (bx = bx0; bx < bx1; bx++) {

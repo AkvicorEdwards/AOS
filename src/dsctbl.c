@@ -10,7 +10,7 @@ void init_gdtidt(void) {
 
     // global (segment) descriptor table 全局段号记录表
 	// GDT 初始化
-	for (i = 0; i < LIMIT_GDT / 8; i++) {
+	for (i = 0; i <= LIMIT_GDT / 8; i++) {
 		set_segmdesc(gdt + i, 0, 0, 0);
 	}
 	set_segmdesc(gdt + 1, 0xffffffff,   0x00000000, AR_DATA32_RW);
@@ -19,14 +19,14 @@ void init_gdtidt(void) {
 
     // interrupt descriptor table 中断记录表
     // IDT 初始化
-	for (i = 0; i < LIMIT_IDT / 8; i++) {
+	for (i = 0; i <= LIMIT_IDT / 8; i++) {
 		set_gatedesc(idt + i, 0, 0, 0);
 	}
 	load_idtr(LIMIT_IDT, ADR_IDT);
 
     // IDT设置
 	set_gatedesc(idt + 0x20, (int) asm_inthandler20, 2 * 8, AR_INTGATE32);
-    set_gatedesc(idt + 0x21, (int) asm_inthandler21, 2 * 8, AR_INTGATE32);
+	set_gatedesc(idt + 0x21, (int) asm_inthandler21, 2 * 8, AR_INTGATE32);
 	set_gatedesc(idt + 0x27, (int) asm_inthandler27, 2 * 8, AR_INTGATE32);
 	set_gatedesc(idt + 0x2c, (int) asm_inthandler2c, 2 * 8, AR_INTGATE32);
 
