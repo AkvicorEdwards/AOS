@@ -3,7 +3,7 @@
 #define FLAGS_OVERRUN		0x0001
 
 // 初始化FIFO缓冲区
-void fifo32_init(struct FIFO32 *fifo, int size, int *buf) {
+void fifo32_init(struct FIFO32 *fifo, int size, int *buf, struct TASK *task) {
 	fifo->size = size;
 	fifo->buf = buf;
 	fifo->free = size; // 缓冲区大小
@@ -26,6 +26,11 @@ int fifo32_put(struct FIFO32 *fifo, int data) {
 		fifo->p = 0;
 	}
 	fifo->free--;
+	if (fifo->task != 0) {
+		if (fifo->task->flags != 2) { // 如果任务处于休眠状态
+			task_run(fifo->task, -1, 0); // 将任务唤醒
+		}
+	}
 	return 0;
 }
 

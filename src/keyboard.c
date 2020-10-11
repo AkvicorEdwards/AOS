@@ -28,8 +28,10 @@ void wait_KBC_sendready(void) {
 
 // 初始化键盘控制电路
 void init_keyboard(struct FIFO32 *fifo, int data0) {
+	// 将FIFO缓冲区的信息保存到全局变量里
 	keyfifo = fifo;
 	keydata0 = data0;
+	// 键盘控制器的初始化
 	wait_KBC_sendready();
 	io_out8(PORT_KEYCMD, KEYCMD_WRITE_MODE);
 	wait_KBC_sendready();

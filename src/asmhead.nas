@@ -115,6 +115,8 @@ keystatus:
 
 ; 切换到保护模式
 
+[INSTRSET "i486p"]				; 说明使用486指令
+
         LGDT       [GDTR0]            ; 设置临时GDT
         MOV        EAX,CR0
         AND        EAX,0x7fffffff    ; 设置bit31为0（为了禁止分页）

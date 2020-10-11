@@ -22,18 +22,21 @@ void load_gdtr(int limit, int addr);
 void load_idtr(int limit, int addr);
 int load_cr0(void);
 void store_cr0(int cr0);
+void load_tr(int tr);
 void asm_inthandler20(void);
 void asm_inthandler21(void);
 void asm_inthandler27(void);
 void asm_inthandler2c(void);
 unsigned int memtest_sub(unsigned int start, unsigned int end);
+void farjmp(int eip, int cs);
 
 // fifo.c
 struct FIFO32 {
 	int *buf;
 	int p, q, size, free, flags;
+	struct TASK *task;
 };
-void fifo32_init(struct FIFO32 *fifo, int size, int *buf);
+void fifo32_init(struct FIFO32 *fifo, int size, int *buf, struct TASK *task);
 int fifo32_put(struct FIFO32 *fifo, int data);
 int fifo32_get(struct FIFO32 *fifo);
 int fifo32_status(struct FIFO32 *fifo);
@@ -48,7 +51,6 @@ void putfonts8_asc(char *vram, int xsize, int x, int y, char c, unsigned char *s
 void init_mouse_cursor8(char *mouse, char bc);
 void putblock8_8(char *vram, int vxsize, int pxsize,
 	int pysize, int px0, int py0, char *buf, int bxsize);
-
 #define COL8_000000		0
 #define COL8_FF0000		1
 #define COL8_00FF00		2
@@ -80,7 +82,6 @@ struct GATE_DESCRIPTOR {
 void init_gdtidt(void);
 void set_segmdesc(struct SEGMENT_DESCRIPTOR *sd, unsigned int limit, int base, int ar);
 void set_gatedesc(struct GATE_DESCRIPTOR *gd, int offset, int selector, int ar);
-
 #define ADR_IDT			0x0026f800
 #define LIMIT_IDT		0x000007ff
 #define ADR_GDT			0x00270000
@@ -89,6 +90,7 @@ void set_gatedesc(struct GATE_DESCRIPTOR *gd, int offset, int selector, int ar);
 #define LIMIT_BOTPAK	0x0007ffff
 #define AR_DATA32_RW	0x4092
 #define AR_CODE32_ER	0x409a
+#define AR_TSS32		0x0089
 #define AR_INTGATE32	0x008e
 
 // int.c
@@ -185,3 +187,37 @@ void timer_free(struct TIMER *timer);
 void timer_init(struct TIMER *timer, struct FIFO32 *fifo, int data);
 void timer_settime(struct TIMER *timer, unsigned int timeout);
 void inthandler20(int *esp);
+
+// mtask.c
+#define MAX_TASKS 1000	//最大任务数量
+#define TASK_GDT0 3			//定义从GDT的几号开始分配给TSS
+#define MAX_TASKS_LV    100
+#define MAX_TASKLEVELS  10
+struct TSS32 {
+	int backlink, esp0, ss0, esp1, ss1, esp2, ss2, cr3;
+	int eip, eflags, eax, ecx, edx, ebx, esp, ebp, esi, edi;
+	int es, cs, ss, ds, fs, gs;
+	int ldtr, iomap;
+};
+struct TASK {
+	int sel, flags;		// sel用来存放GDT的编号
+	int level, priority; // 优先级
+	struct TSS32 tss;
+};
+struct TASKLEVEL {
+	int running; //正在运行的任务数量
+	int now; //这个变量用来记录当前正在运行的是哪个任务
+	struct TASK *tasks[MAX_TASKS_LV];
+};
+struct TASKCTL {
+	int now_lv; //现在活动中的LEVEL
+	char lv_change; //在下次任务切换时是否需要改变LEVEL
+	struct TASKLEVEL level[MAX_TASKLEVELS];
+	struct TASK tasks0[MAX_TASKS];
+};
+extern struct TIMER *task_timer;
+struct TASK *task_init(struct MEMMAN *memman);
+struct TASK *task_alloc(void);
+void task_run(struct TASK *task, int level, int priority);
+void task_switch(void);
+void task_sleep(struct TASK *task);

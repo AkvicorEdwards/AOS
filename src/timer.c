@@ -80,7 +80,8 @@ void timer_settime(struct TIMER *timer, unsigned int timeout) {
 }
 
 void inthandler20(int *esp) {
-    struct TIMER *timer;
+	struct TIMER *timer;
+	char ts = 0;
 	io_out8(PIC0_OCW2, 0x60); // 把IRQ-00信号接收完了的信息通知给PIC
 	timerctl.count++;
 	if (timerctl.next > timerctl.count) {
@@ -88,17 +89,24 @@ void inthandler20(int *esp) {
 	}
 	timer = timerctl.t0; // 首先把最前面的地址赋给timer
 	for (;;) {
-		// 因为timers的定时器都处于运行状态，所以不确认flag
+	// 因为timers的定时器都处于运行状态，所以不确认flag
 		if (timer->timeout > timerctl.count) {
 			break;
 		}
 		// 超时
 		timer->flags = TIMER_FLAGS_ALLOC;
-		fifo32_put(timer->fifo, timer->data);
+		if (timer != task_timer) {
+			fifo32_put(timer->fifo, timer->data);
+		} else {
+			ts = 1; // mt_timer超时
+		}
 		timer = timer->next; // 将下一定时器的地址带入timer
 	}
 	timerctl.t0 = timer;
 	timerctl.next = timer->timeout;
+	if (ts != 0) {
+		task_switch();
+	}
 	return;
 }
 
