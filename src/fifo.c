@@ -10,6 +10,7 @@ void fifo32_init(struct FIFO32 *fifo, int size, int *buf, struct TASK *task) {
 	fifo->flags = 0;
 	fifo->p = 0; // 下一个数据写入位置
 	fifo->q = 0; // 下一个数据读出位置
+	fifo->task = task; // 有数据写入时需要唤醒的任务
 	return;
 }
 

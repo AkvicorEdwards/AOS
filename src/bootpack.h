@@ -128,16 +128,13 @@ int mouse_decode(struct MOUSE_DEC *mdec, unsigned char dat);
 // memory.c
 #define MEMMAN_FREES		4090	// 大约是32KB
 #define MEMMAN_ADDR			0x003c0000
-
 struct FREEINFO { // 可用信息
 	unsigned int addr, size;
 };
-
 struct MEMMAN { // 内存管理
 	int frees, maxfrees, lostsize, losts;
 	struct FREEINFO free[MEMMAN_FREES];
 };
-
 unsigned int memtest(unsigned int start, unsigned int end);
 void memman_init(struct MEMMAN *man);
 unsigned int memman_total(struct MEMMAN *man);
@@ -202,6 +199,7 @@ struct TSS32 {
 struct TASK {
 	int sel, flags;		// sel用来存放GDT的编号
 	int level, priority; // 优先级
+	struct FIFO32 fifo;
 	struct TSS32 tss;
 };
 struct TASKLEVEL {
@@ -216,6 +214,7 @@ struct TASKCTL {
 	struct TASK tasks0[MAX_TASKS];
 };
 extern struct TIMER *task_timer;
+struct TASK *task_now(void);
 struct TASK *task_init(struct MEMMAN *memman);
 struct TASK *task_alloc(void);
 void task_run(struct TASK *task, int level, int priority);
