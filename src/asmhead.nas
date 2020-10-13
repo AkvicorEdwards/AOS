@@ -178,7 +178,6 @@ skip:
 waitkbdout:
         IN         AL,0x64
         AND        AL,0x02
-        ; IN         AL,0x60           ; 空读(为了清空数据接收缓冲区的垃圾数据)
         JNZ        waitkbdout        ; AND结果不为0跳转到waitkbdout
         RET
 

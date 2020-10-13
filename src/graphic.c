@@ -76,7 +76,7 @@ void init_screen8(char *vram, int x, int y) {
 	// 绘制左下按钮的底部线条 黑
     boxfill8(vram, x, COL8_000000,  2,     y -  3, 59,     y -  3);
 	// 绘制左下按钮的右侧线条 黑
-    boxfill8(vram, x, COL8_000000,  2,     y -  3, 59,     y -  3);
+    boxfill8(vram, x, COL8_000000, 60,     y - 24, 60,     y -  3);
 
     // 绘制右下按钮的顶部线条 暗灰
 	boxfill8(vram, x, COL8_848484, x - 47, y - 24, x -  4, y - 24);
@@ -154,8 +154,8 @@ void init_mouse_cursor8(char *mouse, char bc) {
 	return;
 }
 
-void putblock8_8(char *vram, int vxsize, int pxsize, int pysize, 
-                int px0, int py0, char *buf, int bxsize) {
+void putblock8_8(char *vram, int vxsize, int pxsize, 
+    int pysize, int px0, int py0, char *buf, int bxsize) {
 	int x, y;
 	for (y = 0; y < pysize; y++) {
 		for (x = 0; x < pxsize; x++) {

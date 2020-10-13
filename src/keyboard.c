@@ -9,6 +9,7 @@ void inthandler21(int *esp) {
 	io_out8(PIC0_OCW2, 0x61); // 通知PIC"IRQ-01已经受理完毕"
 	data = io_in8(PORT_KEYDAT);
 	fifo32_put(keyfifo, data + keydata0);
+	return;
 }
 
 #define PORT_KEYSTA				0x0064
