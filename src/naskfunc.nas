@@ -20,10 +20,10 @@
 		GLOBAL	_asm_inthandler27, _asm_inthandler2c
 		GLOBAL	_memtest_sub
 		GLOBAL	_farjmp, _farcall
-		GLOBAL	_asm_cons_putchar
+		GLOBAL	_asm_hrb_api
 		EXTERN	_inthandler20, _inthandler21
 		EXTERN	_inthandler27, _inthandler2c
-		EXTERN	_cons_putchar
+		EXTERN	_hrb_api
 
 [SECTION .text] ; 目标文件中写了这些之后再写程序
 
@@ -224,15 +224,12 @@ _farcall:		; void farcall(int eip, int cs);
 		CALL	FAR	[ESP+4]				; eip, cs
 		RET
 
-_asm_cons_putchar:
+_asm_hrb_api:
 		STI
-		PUSHAD
-		PUSH	1
-		AND		EAX,0xff ; 将AH和EAX的高位置0，将EAX置为已存入字符编码的状态
-		PUSH	EAX
-		PUSH	DWORD [0x0fec]	; 读取内存并PUSH该值
-		CALL	_cons_putchar
-		ADD		ESP,12		; 丢弃栈中的数据
+		PUSHAD	; 用于保存寄存器值的PUSH
+		PUSHAD	; 用于向hrb_api传值的PUSH
+		CALL	_hrb_api
+		ADD		ESP,32
 		POPAD
 		IRETD
 
