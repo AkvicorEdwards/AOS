@@ -42,16 +42,51 @@ bootpack.bim : $(OBJS_BOOTPACK)
 bootpack.hrb : bootpack.bim
 	$(BIM2HRB) bootpack.bim bootpack.hrb 0
 
+haribote.sys : asmhead.bin bootpack.hrb Makefile
+	copy /B asmhead.bin+bootpack.hrb haribote.sys
+
 hello.hrb : hello.nas
 	$(NASK) hello.nas hello.hrb hello.lst
 
 hello2.hrb : hello2.nas
 	$(NASK) hello2.nas hello2.hrb hello2.lst
 
-haribote.sys : asmhead.bin bootpack.hrb Makefile
-	copy /B asmhead.bin+bootpack.hrb haribote.sys
+a.bim : a.obj a_nask.obj
+	$(OBJ2BIM) @$(RULEFILE) out:a.bim map:a.map a.obj a_nask.obj
 
-haribote.img : ipl.bin haribote.sys hello.hrb hello2.hrb
+a.hrb : a.bim
+	$(BIM2HRB) a.bim a.hrb 0
+
+hello3.bim : hello3.obj a_nask.obj
+	$(OBJ2BIM) @$(RULEFILE) out:hello3.bim map:hello3.map hello3.obj a_nask.obj
+
+hello3.hrb : hello3.bim
+	$(BIM2HRB) hello3.bim hello3.hrb 0
+
+crack1.bim : crack1.obj
+	$(OBJ2BIM) @$(RULEFILE) out:crack1.bim map:crack1.map crack1.obj a_nask.obj
+
+crack1.hrb : crack1.bim
+	$(BIM2HRB) crack1.bim crack1.hrb 0
+
+crack2.hrb : crack2.nas
+	$(NASK) crack2.nas crack2.hrb crack2.lst
+
+crack3.hrb : crack3.nas
+	$(NASK) crack3.nas crack3.hrb crack3.lst
+
+crack4.hrb : crack4.nas
+	$(NASK) crack4.nas crack4.hrb crack4.lst
+
+crack5.hrb : crack5.nas
+	$(NASK) crack5.nas crack5.hrb crack5.lst
+
+crack6.hrb : crack6.nas
+	$(NASK) crack6.nas crack6.hrb crack6.lst
+
+haribote.img : ipl.bin haribote.sys \
+		hello.hrb hello2.hrb a.hrb hello3.hrb crack1.hrb crack2.hrb crack3.hrb \
+		crack4.hrb crack5.hrb crack6.hrb
 	$(EDIMG)   imgin:../z_tools/fdimg0at.tek \
 		wbinimg src:ipl.bin len:512 from:0 to:0 \
 		copy from:haribote.sys to:@: \
@@ -59,6 +94,14 @@ haribote.img : ipl.bin haribote.sys hello.hrb hello2.hrb
 		copy from:make.bat to:@: \
 		copy from:hello.hrb to:@: \
 		copy from:hello2.hrb to:@: \
+		copy from:a.hrb to:@: \
+		copy from:hello3.hrb to:@: \
+		copy from:crack1.hrb to:@: \
+		copy from:crack2.hrb to:@: \
+		copy from:crack3.hrb to:@: \
+		copy from:crack4.hrb to:@: \
+		copy from:crack5.hrb to:@: \
+		copy from:crack6.hrb to:@: \
 		imgout:haribote.img
 
 %.gas : %.c bootpack.h
@@ -86,12 +129,11 @@ clean :
 	-$(DEL) *.bin
 	-$(DEL) *.lst
 	-$(DEL) *.obj
-	-$(DEL) bootpack.map
-	-$(DEL) bootpack.bim
-	-$(DEL) bootpack.hrb
+	-$(DEL) *.map
+	-$(DEL) *.bim
+	-$(DEL) *.hrb
 	-$(DEL) haribote.sys
 
 src_only :
 	$(MAKE) clean
 	-$(DEL) haribote.img
-	-$(DEL) *.hrb

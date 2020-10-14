@@ -17,6 +17,7 @@ void init_pic(void) {
 
 	io_out8(PIC0_IMR,  0xfb  ); // 11111011 PIC1 以外全部禁止
 	io_out8(PIC1_IMR,  0xff  ); // 11111111 禁止所有中断
+	return;
 }
 
 // PIC0中断的不完整策略
