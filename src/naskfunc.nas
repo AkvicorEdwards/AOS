@@ -225,11 +225,12 @@ _farcall:		; void farcall(int eip, int cs);
 		RET
 
 _asm_cons_putchar:
+		STI
 		PUSH	1
-		AND		EAX,0xff	; AHやEAXの上位を0にして、EAXに文字コードが入った状態にする。
+		AND		EAX,0xff ; 将AH和EAX的高位置0，将EAX置为已存入字符编码的状态
 		PUSH	EAX
-		PUSH	DWORD [0x0fec]	; メモリの内容を読み込んでその値をPUSHする
+		PUSH	DWORD [0x0fec]	; 读取内存并PUSH该值
 		CALL	_cons_putchar
-		ADD		ESP,12		; スタックに積んだデータを捨てる
-		RETF
+		ADD		ESP,12		; 丢弃栈中的数据
+		IRETD
 
