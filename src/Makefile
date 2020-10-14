@@ -76,27 +76,23 @@ hello5.bim : hello5.obj
 hello5.hrb : hello5.bim
 	$(BIM2HRB) hello5.bim hello5.hrb 0
 
-bug1.bim : bug1.obj
-	$(OBJ2BIM) @$(RULEFILE) out:bug1.bim map:bug1.map bug1.obj a_nask.obj
+winhelo.bim : winhelo.obj a_nask.obj
+	$(OBJ2BIM) @$(RULEFILE) out:winhelo.bim stack:1k map:winhelo.map \
+		winhelo.obj a_nask.obj
 
-bug1.hrb : bug1.bim
-	$(BIM2HRB) bug1.bim bug1.hrb 0
+winhelo.hrb : winhelo.bim
+	$(BIM2HRB) winhelo.bim winhelo.hrb 0
 
-bug2.bim : bug2.obj
-	$(OBJ2BIM) @$(RULEFILE) out:bug2.bim map:bug2.map bug2.obj
+winhelo2.bim : winhelo2.obj a_nask.obj
+	$(OBJ2BIM) @$(RULEFILE) out:winhelo2.bim stack:1k map:winhelo2.map \
+		winhelo2.obj a_nask.obj
 
-bug2.hrb : bug2.bim
-	$(BIM2HRB) bug2.bim bug2.hrb 0
-
-bug3.bim : bug3.obj
-	$(OBJ2BIM) @$(RULEFILE) out:bug3.bim map:bug3.map bug3.obj a_nask.obj
-
-bug3.hrb : bug3.bim
-	$(BIM2HRB) bug3.bim bug3.hrb 0
+winhelo2.hrb : winhelo2.bim
+	$(BIM2HRB) winhelo2.bim winhelo2.hrb 0
 
 haribote.img : ipl.bin haribote.sys \
-		hello.hrb hello2.hrb a.hrb hello3.hrb bug1.hrb bug2.hrb bug3.hrb \
-		hello4.hrb hello5.hrb
+		hello.hrb hello2.hrb a.hrb hello3.hrb hello4.hrb hello5.hrb \
+		winhelo.hrb winhelo2.hrb
 	$(EDIMG)   imgin:../z_tools/fdimg0at.tek \
 		wbinimg src:ipl.bin len:512 from:0 to:0 \
 		copy from:haribote.sys to:@: \
@@ -106,11 +102,10 @@ haribote.img : ipl.bin haribote.sys \
 		copy from:hello2.hrb to:@: \
 		copy from:a.hrb to:@: \
 		copy from:hello3.hrb to:@: \
-		copy from:bug1.hrb to:@: \
-		copy from:bug2.hrb to:@: \
-		copy from:bug3.hrb to:@: \
 		copy from:hello4.hrb to:@: \
 		copy from:hello5.hrb to:@: \
+		copy from:winhelo.hrb to:@: \
+		copy from:winhelo2.hrb to:@: \
 		imgout:haribote.img
 
 %.gas : %.c bootpack.h
