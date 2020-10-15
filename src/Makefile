@@ -117,9 +117,16 @@ stars2.bim : stars2.obj a_nask.obj
 
 stars2.hrb : stars2.bim
 	$(BIM2HRB) stars2.bim stars2.hrb 47k
+lines.bim : lines.obj a_nask.obj
+	$(OBJ2BIM) @$(RULEFILE) out:lines.bim stack:1k map:lines.map \
+		lines.obj a_nask.obj
+
+lines.hrb : lines.bim
+	$(BIM2HRB) lines.bim lines.hrb 48k
 haribote.img : ipl.bin haribote.sys \
 		hello.hrb hello2.hrb a.hrb hello3.hrb hello4.hrb hello5.hrb \
-		winhelo.hrb winhelo2.hrb winhelo3.hrb star1.hrb stars.hrb stars2.hrb
+		winhelo.hrb winhelo2.hrb winhelo3.hrb star1.hrb stars.hrb stars2.hrb \
+		lines.hrb
 	$(EDIMG)   imgin:../z_tools/fdimg0at.tek \
 		wbinimg src:ipl.bin len:512 from:0 to:0 \
 		copy from:haribote.sys to:@: \
@@ -137,6 +144,7 @@ haribote.img : ipl.bin haribote.sys \
 		copy from:star1.hrb to:@: \
 		copy from:stars.hrb to:@: \
 		copy from:stars2.hrb to:@: \
+		copy from:lines.hrb to:@: \
 		imgout:haribote.img
 
 %.gas : %.c bootpack.h
