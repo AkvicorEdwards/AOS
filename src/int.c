@@ -17,15 +17,6 @@ void init_pic(void) {
 
 	io_out8(PIC0_IMR,  0xfb  ); // 11111011 PIC1 以外全部禁止
 	io_out8(PIC1_IMR,  0xff  ); // 11111111 禁止所有中断
-	return;
-}
 
-// PIC0中断的不完整策略
-// 这个中断在Athlon64X2上通过芯片组提供的便利，只需执行一次
-// 这个中断只是接收，不执行任何操作
-// 为什么不处理？
-// 因为这个中断可能是电气噪声引发的、只是处理一些重要的情况。
-void inthandler27(int *esp) {
-	io_out8(PIC0_OCW2, 0x67); // 通知PIC的IRQ-07
 	return;
 }

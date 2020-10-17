@@ -10,10 +10,10 @@ void HariMain(void) {
 	timer = api_alloctimer();
 	api_inittimer(timer, 128);
 	for (i = 20000000; i >= 20000; i -= i / 100) {
-		// 20KHz~20Hz ¼´ÈËÀà¿ÉÒÔÌıµ½µÄÉùÒô·¶Î§
-		// iÒÔ1%µÄËÙ¶Èµİ¼õ
+		// 20KHz~20Hz å³äººç±»å¯ä»¥å¬åˆ°çš„å£°éŸ³èŒƒå›´
+		// iä»¥1%çš„é€Ÿåº¦é€’å‡
 		api_beep(i);
-		api_settimer(timer, 1); // 0.01Ãë
+		api_settimer(timer, 1); // 0.01ç§’
 		if (api_getkey(1) != 128) {
 			break;
 		}
