@@ -169,6 +169,8 @@ void cons_runcmd(char *cmdline, struct CONSOLE *cons, int *fat, int memtotal) {
 		cmd_type(cons, fat, cmdline);
 	} else if (strcmp(cmdline, "exit") == 0) {
 		cmd_exit(cons, fat);
+	} else if (strncmp(cmdline, "start ", 6) == 0) {
+		cmd_start(cons, cmdline, memtotal);
 	} else if (cmdline[0] != 0) {
 		if (cmd_app(cons, fat, cmdline) == 0) {
 			// 不是命令也不是空行
@@ -258,6 +260,21 @@ void cmd_exit(struct CONSOLE *cons, int *fat)
 	}
 }
 
+void cmd_start(struct CONSOLE *cons, char *cmdline, int memtotal) {
+	struct SHTCTL *shtctl = (struct SHTCTL *) *((int *) 0x0fe4);
+	struct SHEET *sht = open_console(shtctl, memtotal);
+	struct FIFO32 *fifo = &sht->task->fifo;
+	int i;
+	sheet_slide(sht, 32, 4);
+	sheet_updown(sht, shtctl->top);
+	// 将命令行输入的字符串逐字复制到新的命令行窗口中
+	for (i = 6; cmdline[i] != 0; i++) {
+		fifo32_put(fifo, cmdline[i] + 256);
+	}
+	fifo32_put(fifo, 10 + 256);	// Enter
+	cons_newline(cons);
+	return;
+}
 int cmd_app(struct CONSOLE *cons, int *fat, char *cmdline) {
 	struct MEMMAN *memman = (struct MEMMAN *) MEMMAN_ADDR;
 	struct FILEINFO *finfo;
