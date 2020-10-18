@@ -43,7 +43,7 @@ void HariMain(void) {
 	};
 	int key_shift = 0, key_leds = (binfo->leds >> 4) & 7, keycmd_wait = -1;
 	int j, x, y, mmx = -1, mmy = -1, mmx2 = 0;
-	struct SHEET *sht = 0, *key_win;
+	struct SHEET *sht = 0, *key_win, *sht2;
 
 	init_gdtidt();
 	init_pic();
@@ -269,6 +269,10 @@ void HariMain(void) {
 												task_run(task, -1, 0);
 											} else { // 命令行窗口
 												task = sht->task;
+												sheet_updown(sht, -1); // 暂且隐藏该图层
+												keywin_off(key_win);
+												key_win = shtctl->sheets[shtctl->top - 1];
+												keywin_on(key_win);
 												io_cli();
 												fifo32_put(&task->fifo, 4);
 												io_sti();
@@ -299,6 +303,10 @@ void HariMain(void) {
 				close_console(shtctl->sheets0 + (i - 768));
 			} else if (1024 <= i && i <= 2023) {
 				close_constask(taskctl->tasks0 + (i - 1024));
+			} else if (2024 <= i && i <= 2279) { // 只关闭命令行窗口
+				sht2 = shtctl->sheets0 + (i - 2024);
+				memman_free_4k(memman, (int) sht2->buf, 256 * 165);
+				sheet_free(sht2);
 			}
 		}
 	}
