@@ -9,6 +9,8 @@ void console_task(struct SHEET *sheet, int memtotal) {
 	struct CONSOLE cons;
 	struct FILEHANDLE fhandle[8];
 	char cmdline[30];
+	unsigned char *nihongo = (char *) *((int *) 0x0fe8);
+
 	cons.sht = sheet;
 	cons.cur_x =  8;
 	cons.cur_y = 28;
@@ -27,6 +29,13 @@ void console_task(struct SHEET *sheet, int memtotal) {
 	}
 	task->fhandle = fhandle;
 	task->fat = fat;
+	if (nihongo[4096] != 0xff) { // 是否载入了日文字库
+		task->langmode = 1;
+	} else {
+		task->langmode = 0;
+	}
+	task->langmode = 3;
+	task->langbyte1 = 0;
 
 	//显示提示符
 	cons_putchar(&cons, '>', 1);
@@ -145,7 +154,8 @@ void cons_putchar(struct CONSOLE *cons, int chr, char move) {
 
 void cons_newline(struct CONSOLE *cons) {
 	int x, y;
-    struct SHEET *sheet = cons->sht;
+	struct SHEET *sheet = cons->sht;
+	struct TASK *task = task_now();
 	if (cons->cur_y < 28 + 112) {
 		cons->cur_y += 16; // 换行
 	} else {
@@ -165,6 +175,9 @@ void cons_newline(struct CONSOLE *cons) {
 		}
 	}
 	cons->cur_x = 8;
+	if (task->langmode == 1 && task->langbyte1 != 0) {
+		cons->cur_x = 16;
+	}
 	return;
 }
 
@@ -195,6 +208,8 @@ void cons_runcmd(char *cmdline, struct CONSOLE *cons, int *fat, int memtotal) {
 		cmd_start(cons, cmdline, memtotal);
 	} else if (strncmp(cmdline, "ncst ", 5) == 0) {
 		cmd_ncst(cons, cmdline, memtotal);
+	} else if (strncmp(cmdline, "langmode ", 9) == 0) {
+		cmd_langmode(cons, cmdline);
 	} else if (cmdline[0] != 0) {
 		if (cmd_app(cons, fat, cmdline) == 0) {
 			// 不是命令也不是空行
@@ -299,6 +314,17 @@ void cmd_ncst(struct CONSOLE *cons, char *cmdline, int memtotal) {
 	cons_newline(cons);
 	return;
 }
+void cmd_langmode(struct CONSOLE *cons, char *cmdline) {
+	struct TASK *task = task_now();
+	unsigned char mode = cmdline[9] - '0';
+	if (mode <= 3) {
+		task->langmode = mode;
+	} else {
+		cons_putstr0(cons, "mode number error.\n");
+	}
+	cons_newline(cons);
+	return;
+}
 int cmd_app(struct CONSOLE *cons, int *fat, char *cmdline) {
 	struct MEMMAN *memman = (struct MEMMAN *) MEMMAN_ADDR;
 	struct FILEINFO *finfo;
@@ -362,6 +388,7 @@ int cmd_app(struct CONSOLE *cons, int *fat, char *cmdline) {
 			}
 			timer_cancelall(&task->fifo);
 			memman_free_4k(memman, (int) q, segsiz);
+			task->langbyte1 = 0;
 		} else {
 			cons_putstr0(cons, ".hrb file format error.\n");
 		}
@@ -573,6 +600,8 @@ struct TASK *task = task_now();
 			i++;
 		}
 		reg[7] = i;
+	} else if (edx == 27) {
+		reg[7] = task->langmode;
 	}
 	return 0;
 }

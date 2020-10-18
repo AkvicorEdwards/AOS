@@ -117,12 +117,139 @@ void putfont8(char *vram, int xsize, int x, int y, char c, char *font) {
 	return;
 }
 
+void putfont32(char *vram, int xsize, int x, int y, char c, char *font1, char *font2) {
+	int i,k,j,f;
+	char *p, d ;
+	j=0;
+	p=vram+(y+j)*xsize+x;
+	j++;
+	//上半部分
+	for(i=0;i<16;i++)
+	{
+		for(k=0;k<8;k++)
+		{
+			if(font1[i]&(0x80>>k))
+			{
+				p[k+(i%2)*8]=c;
+			}
+		}
+		for(k=0;k<8/2;k++)
+		{
+			f=p[k+(i%2)*8];
+			p[k+(i%2)*8]=p[8-1-k+(i%2)*8];
+			p[8-1-k+(i%2)*8]=f;
+		}
+		if(i%2)
+		{
+			p=vram+(y+j)*xsize+x;
+			j++;
+		}
+	}
+	//下半部分
+	for(i=0;i<16;i++)
+	{
+		for(k=0;k<8;k++)
+		{
+			if(font2[i]&(0x80>>k))
+			{
+				p[k+(i%2)*8]=c;
+			}
+		}
+		for(k=0;k<8/2;k++)
+		{
+			f=p[k+(i%2)*8];
+			p[k+(i%2)*8]=p[8-1-k+(i%2)*8];
+			p[8-1-k+(i%2)*8]=f;
+		}
+		if(i%2)
+		{
+			p=vram+(y+j)*xsize+x;
+			j++;
+		}
+	}
+	return;
+}
+
 void putfonts8_asc(char *vram, int xsize, int x, int y, char c, unsigned char *s) {
 	extern char hankaku[4096];
-	// C语言中，字符串都是以0x00结尾
-	for (; *s != 0x00; s++) {
-		putfont8(vram, xsize, x, y, c, hankaku + *s * 16);
-		x += 8;
+	struct TASK *task = task_now();
+	char *font;
+	extern char *nihongo;
+	extern char *chinese;
+	int k, t;
+
+	if (task->langmode == 0) {
+		for (; *s != 0x00; s++) {
+			putfont8(vram, xsize, x, y, c, hankaku + *s * 16);
+			x += 8;
+		}
+	}
+	if (task->langmode == 1) {
+		for (; *s != 0x00; s++) {
+			if (task->langbyte1 == 0) {
+				if ((0x81 <= *s && *s <= 0x9f) || (0xe0 <= *s && *s <= 0xfc)) {
+					task->langbyte1 = *s;
+				} else {
+					putfont8(vram, xsize, x, y, c, nihongo + *s * 16);
+				}
+			} else {
+				if (0x81 <= task->langbyte1 && task->langbyte1 <= 0x9f) {
+					k = (task->langbyte1 - 0x81) * 2;
+				} else {
+					k = (task->langbyte1 - 0xe0) * 2 + 62;
+				}
+				if (0x40 <= *s && *s <= 0x7e) {
+					t = *s - 0x40;
+				} else if (0x80 <= *s && *s <= 0x9e) {
+					t = *s - 0x80 + 63;
+				} else {
+					t = *s - 0x9f;
+					k++;
+				}
+				task->langbyte1 = 0;
+				font = nihongo + 256 * 16 + (k * 94 + t) * 32;
+				putfont8(vram, xsize, x - 8, y, c, font     );	// 左半分
+				putfont8(vram, xsize, x    , y, c, font + 16);	// 右半分
+			}
+			x += 8;
+		}
+	}
+	if (task->langmode == 2) {
+		for (; *s != 0x00; s++) {
+			if (task->langbyte1 == 0) {
+				if (0x81 <= *s && *s <= 0xfe) {
+					task->langbyte1 = *s;
+				} else {
+					putfont8(vram, xsize, x, y, c, nihongo + *s * 16);
+				}
+			} else {
+				k = task->langbyte1 - 0xa1;
+				t = *s - 0xa1;
+				task->langbyte1 = 0;
+				font = nihongo + 256 * 16 + (k * 94 + t) * 32;
+				putfont8(vram, xsize, x - 8, y, c, font     );	// 左半分
+				putfont8(vram, xsize, x    , y, c, font + 16);	// 右半分
+			}
+			x += 8;
+		}
+	}
+	if (task->langmode == 3) {
+		for (; *s != 0x00; s++) {
+			if (task->langbyte1 == 0) {
+				if (0xa1 <= *s && *s <= 0xfe) {
+					task->langbyte1 = *s;
+				} else {
+					putfont8(vram, xsize, x, y, c, hankaku + *s * 16);//只要是半角就使用hankaku里面的字符
+				}
+			} else {
+				k = task->langbyte1 - 0xa1;
+				t = *s - 0xa1;
+				task->langbyte1 = 0;
+				font = chinese + (k * 94 + t) * 32;
+				putfont32(vram,xsize,x-8,y,c,font,font+16);
+			}
+			x += 8;
+		}
 	}
 	return;
 }

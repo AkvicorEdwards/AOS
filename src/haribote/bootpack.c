@@ -8,6 +8,9 @@ void keywin_on(struct SHEET *key_win);
 void close_console(struct SHEET *sht);
 void close_constask(struct TASK *task);
 
+unsigned char *chinese;
+unsigned char *nihongo;
+
 void HariMain(void) {
 	struct BOOTINFO *binfo = (struct BOOTINFO *) ADR_BOOTINFO;
 	struct SHTCTL *shtctl;
@@ -44,6 +47,9 @@ void HariMain(void) {
 	int key_shift = 0, key_leds = (binfo->leds >> 4) & 7, keycmd_wait = -1;
 	int j, x, y, mmx = -1, mmy = -1, mmx2 = 0;
 	struct SHEET *sht = 0, *key_win, *sht2;
+	int *fat;
+	struct FILEINFO *finfo;
+	extern char hankaku[4096];
 
 	init_gdtidt();
 	init_pic();
@@ -68,6 +74,7 @@ void HariMain(void) {
 	fifo.task = task_a;
 	task_run(task_a, 1, 2);
 	*((int *) 0x0fe4) = (int) shtctl;
+	task_a->langmode = 0;
 
 	// sht_back
 	sht_back  = sheet_alloc(shtctl);
@@ -97,6 +104,41 @@ void HariMain(void) {
 	// 为了避免和键盘当前状态冲突，在一开始先进行设置
 	fifo32_put(&keycmd, KEYCMD_LED);
 	fifo32_put(&keycmd, key_leds);
+
+	// 载入 nihongo.fnt
+	nihongo = (unsigned char *) memman_alloc_4k(memman, 16 * 256 + 32 * 94 * 47);
+	chinese = (unsigned char *) memman_alloc_4k(memman, 0x5d5d * 32);
+	fat = (int *) memman_alloc_4k(memman, 4 * 2880);
+	file_readfat(fat, (unsigned char *) (ADR_DISKIMG + 0x000200));
+
+	// 
+	finfo = file_search("nihongo.fnt", (struct FILEINFO *) (ADR_DISKIMG + 0x002600), 224);
+	if (finfo != 0) {
+		file_loadfile(finfo->clustno, finfo->size, nihongo, fat, (char *) (ADR_DISKIMG + 0x003e00));
+	} else {
+		for (i = 0; i < 16 * 256; i++) {
+			nihongo[i] = hankaku[i]; // 没有字库，半角部分直接复制英文字裤
+		}
+		for (i = 16 * 256; i < 16 * 256 + 32 * 94 * 47; i++) {
+			nihongo[i] = 0xff; // 没有字库，全角部分以0xff填充
+		}
+	}
+	// *((int *) 0x0fe8) = (int) nihongo;
+
+	finfo = file_search("HZK16.fnt", (struct FILEINFO *) (ADR_DISKIMG + 0x002600), 224);
+	if (finfo != 0) {
+		file_loadfile(finfo->clustno, finfo->size, chinese, fat, (char *) (ADR_DISKIMG + 0x003e00));
+	} else {
+		for (i = 0; i < 16 * 256; i++) {
+			chinese[i] = hankaku[i]; // 没有字库，半角部分直接复制英文字裤
+		}
+		for (i = 16 * 256; i < 16 * 256 + 32 * 94 * 47; i++) {
+			chinese[i] = 0xff; // 没有字库，全角部分以0xff填充
+		}
+	}
+	// *((int *) 0x0fe8) = (int) chinese;
+
+	memman_free_4k(memman, (int) fat, 4 * 2880);
 
 	for (;;) {
 		if (fifo32_status(&keycmd) > 0 && keycmd_wait < 0) {
