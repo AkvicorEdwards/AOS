@@ -1,1 +1,1 @@
-del/f/s/q run
+rmdir /s/q run
