@@ -312,8 +312,7 @@ void HariMain(void) {
 	}
 }
 
-void keywin_off(struct SHEET *key_win)
-{
+void keywin_off(struct SHEET *key_win) {
 	change_wtitle8(key_win, 0);
 	if ((key_win->flags & 0x20) != 0) {
 		fifo32_put(&key_win->task->fifo, 3); // 命令行窗口光标关闭
@@ -329,8 +328,7 @@ void keywin_on(struct SHEET *key_win) {
 	return;
 }
 
-struct TASK *open_constask(struct SHEET *sht, unsigned int memtotal)
-{
+struct TASK *open_constask(struct SHEET *sht, unsigned int memtotal) {
 	struct MEMMAN *memman = (struct MEMMAN *) MEMMAN_ADDR;
 	struct TASK *task = task_alloc();
 	int *cons_fifo = (int *) memman_alloc_4k(memman, 128 * 4);
@@ -350,8 +348,7 @@ struct TASK *open_constask(struct SHEET *sht, unsigned int memtotal)
 	return task;
 }
 
-struct SHEET *open_console(struct SHTCTL *shtctl, unsigned int memtotal)
-{
+struct SHEET *open_console(struct SHTCTL *shtctl, unsigned int memtotal) {
 	struct MEMMAN *memman = (struct MEMMAN *) MEMMAN_ADDR;
 	struct SHEET *sht = sheet_alloc(shtctl);
 	unsigned char *buf = (unsigned char *) memman_alloc_4k(memman, 256 * 165);
