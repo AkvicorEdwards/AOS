@@ -1,7 +1,7 @@
 ; haribote-ipl
 ; 只能读取10个柱面
 
-CYLS	EQU		30				; 声明CYLS=10（相当于C中的#define）
+CYLS	EQU		30				; 声明CYLS=30（相当于C中的#define）
 
 		ORG		0x7c00			; 指明程序装载地址
 		; 0x00007c00 - 0x00007dff 启动区内容的装载地址 

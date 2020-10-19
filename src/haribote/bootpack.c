@@ -111,7 +111,6 @@ void HariMain(void) {
 	fat = (int *) memman_alloc_4k(memman, 4 * 2880);
 	file_readfat(fat, (unsigned char *) (ADR_DISKIMG + 0x000200));
 
-	// 
 	finfo = file_search("nihongo.fnt", (struct FILEINFO *) (ADR_DISKIMG + 0x002600), 224);
 	if (finfo != 0) {
 		file_loadfile(finfo->clustno, finfo->size, nihongo, fat, (char *) (ADR_DISKIMG + 0x003e00));
@@ -123,7 +122,6 @@ void HariMain(void) {
 			nihongo[i] = 0xff; // 没有字库，全角部分以0xff填充
 		}
 	}
-	// *((int *) 0x0fe8) = (int) nihongo;
 
 	finfo = file_search("HZK16.fnt", (struct FILEINFO *) (ADR_DISKIMG + 0x002600), 224);
 	if (finfo != 0) {
@@ -136,7 +134,6 @@ void HariMain(void) {
 			chinese[i] = 0xff; // 没有字库，全角部分以0xff填充
 		}
 	}
-	// *((int *) 0x0fe8) = (int) chinese;
 
 	memman_free_4k(memman, (int) fat, 4 * 2880);
 

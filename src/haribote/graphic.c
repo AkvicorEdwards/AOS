@@ -117,13 +117,9 @@ void putfont8(char *vram, int xsize, int x, int y, char c, char *font) {
 	return;
 }
 
-void putfont8_ud_rev(char *vram, int xsize, int x, int y,
-			 char c, char *font) {
-	int i, k, j, f;
+void putfont8_ud_rev(char *vram, int xsize, int x, int y, char c, char *font) {
+	int i, k;
 	char *p, d ;
-	j = 0;
-	p = vram + (y + j) * xsize + x;
-	j++;
 	for(i = 0; i < 8; i++) {
 		p = vram + (y + i) * xsize + x;
 		d = font[2 * i];
@@ -212,7 +208,8 @@ void putfonts8_asc(char *vram, int xsize, int x, int y, char c, unsigned char *s
 				if (0xa1 <= *s && *s <= 0xfe) {
 					task->langbyte1 = *s;
 				} else {
-					putfont8(vram, xsize, x, y, c, hankaku + *s * 16);//只要是半角就使用hankaku里面的字符
+					//只要是半角就使用hankaku里面的字符
+					putfont8(vram, xsize, x, y, c, hankaku + *s * 16);
 				}
 			} else {
 				k = task->langbyte1 - 0xa1;
