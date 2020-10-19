@@ -19,7 +19,7 @@ haribote.img : haribote/ipl.bin haribote/haribote.sys Makefile \
 		sosu/sosu.hrb sosu2/sosu2.hrb sosu3/sosu3.hrb \
 		type/type.hrb iroha/iroha.hrb chklang/chklang.hrb \
 		notrec/notrec.hrb bball/bball.hrb invader/invader.hrb \
-		calc/calc.hrb tview/tview.hrb
+		calc/calc.hrb tview/tview.hrb mmlplay/mmlplay.hrb
 	$(EDIMG)   imgin:../z_tools/fdimg0at.tek \
 		wbinimg src:haribote/ipl.bin len:512 from:0 to:0 \
 		copy from:haribote/haribote.sys to:@: \
@@ -53,6 +53,11 @@ haribote.img : haribote/ipl.bin haribote/haribote.sys Makefile \
 		copy from:invader/invader.hrb to:@: \
 		copy from:calc/calc.hrb to:@: \
 		copy from:tview/tview.hrb to:@: \
+		copy from:mmlplay/mmlplay.hrb to:@: \
+		copy from:mmldata/kirakira.mml to:@: \
+		copy from:mmldata/fujisan.mml to:@: \
+		copy from:mmldata/daigo.mml to:@: \
+		copy from:mmldata/daiku.mml to:@: \
 		copy from:euccn.txt to:@: \
 		copy from:nihongo/HZK16.fnt to:@: \
 		copy from:nihongo/nihongo.fnt to:@: \
@@ -97,6 +102,7 @@ full :
 	$(MAKE) -C invader
 	$(MAKE) -C calc
 	$(MAKE) -C tview
+	$(MAKE) -C mmlplay
 	$(MAKE) haribote.img
 
 run_full :
@@ -148,6 +154,7 @@ clean_full :
 	$(MAKE) -C invader		clean
 	$(MAKE) -C calc			clean
 	$(MAKE) -C tview		clean
+	$(MAKE) -C mmlplay		clean
 
 src_only_full :
 	$(MAKE) -C haribote		src_only
@@ -179,6 +186,7 @@ src_only_full :
 	$(MAKE) -C invader		src_only
 	$(MAKE) -C calc			src_only
 	$(MAKE) -C tview		src_only
+	$(MAKE) -C mmlplay		src_only
 	-$(DEL) haribote.img
 
 refresh :
