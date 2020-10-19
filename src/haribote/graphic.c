@@ -117,54 +117,27 @@ void putfont8(char *vram, int xsize, int x, int y, char c, char *font) {
 	return;
 }
 
-void putfont32(char *vram, int xsize, int x, int y, char c, char *font1, char *font2) {
-	int i,k,j,f;
+void putfont8_ud_rev(char *vram, int xsize, int x, int y,
+			 char c, char *font) {
+	int i, k, j, f;
 	char *p, d ;
-	j=0;
-	p=vram+(y+j)*xsize+x;
+	j = 0;
+	p = vram + (y + j) * xsize + x;
 	j++;
-	//上半部分
-	for(i=0;i<16;i++)
-	{
-		for(k=0;k<8;k++)
-		{
-			if(font1[i]&(0x80>>k))
-			{
-				p[k+(i%2)*8]=c;
+	for(i = 0; i < 8; i++) {
+		p = vram + (y + i) * xsize + x;
+		d = font[2 * i];
+		for(k = 0; k < 8; k++) {
+			if(d&(0x01<<k)) {
+				p[k] = c;
 			}
 		}
-		for(k=0;k<8/2;k++)
-		{
-			f=p[k+(i%2)*8];
-			p[k+(i%2)*8]=p[8-1-k+(i%2)*8];
-			p[8-1-k+(i%2)*8]=f;
-		}
-		if(i%2)
-		{
-			p=vram+(y+j)*xsize+x;
-			j++;
-		}
-	}
-	//下半部分
-	for(i=0;i<16;i++)
-	{
-		for(k=0;k<8;k++)
-		{
-			if(font2[i]&(0x80>>k))
-			{
-				p[k+(i%2)*8]=c;
+		p += 8;
+		d = font[2 * i + 1];
+		for(k = 0; k < 8; k++) {
+			if(d&(0x01<<k)) {
+				p[k] = c;
 			}
-		}
-		for(k=0;k<8/2;k++)
-		{
-			f=p[k+(i%2)*8];
-			p[k+(i%2)*8]=p[8-1-k+(i%2)*8];
-			p[8-1-k+(i%2)*8]=f;
-		}
-		if(i%2)
-		{
-			p=vram+(y+j)*xsize+x;
-			j++;
 		}
 	}
 	return;
@@ -246,7 +219,8 @@ void putfonts8_asc(char *vram, int xsize, int x, int y, char c, unsigned char *s
 				t = *s - 0xa1;
 				task->langbyte1 = 0;
 				font = chinese + (k * 94 + t) * 32;
-				putfont32(vram,xsize,x-8,y,c,font,font+16);
+				putfont8_ud_rev(vram, xsize, x - 8, y    , c, font     );
+				putfont8_ud_rev(vram, xsize, x - 8, y + 8, c, font + 16);
 			}
 			x += 8;
 		}
