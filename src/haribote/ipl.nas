@@ -54,81 +54,17 @@ entry:
 		MOV		CH,0			; 柱面0  柱面号&0xff
 		MOV		DH,0			; 磁头0  磁头号
 		MOV		CL,2			; 扇区2  扇区号（0-5位）|（柱面号&0x300）>>2
+		MOV		BX,18*2*CYLS-1	; 要读取的合计扇区数
+		CALL	readfast		; 告诉读取
 
-readloop:
-								; SI 原变址寄存器
-		MOV		SI,0			; 记录失败次数寄存器
-
-retry:
-								; AX 高8位为AH 低8位为AL
-								; AH 累加寄存器高位
-		MOV		AH,0x02			; AH=0x02 : 读盘
-								; AH=0x03 : 写盘
-								; AH=0x04 : 校验
-								; AH=0x0c : 寻道
-
-		MOV		AL,1			; 1个扇区 AL=处理对象的扇区数
-								; （只能同时处理连续的扇区）
-
-		MOV		BX,0			; BX 基址寄存器
-		MOV		DL,0x00			; A驱动器  驱动器号
-		INT		0x13			; 调用磁盘BIOS 0x13中断向量指向的中断服务程序实质上就是磁盘服务程序
-
-								; FLAGS.CF==0 没有错误，AH=0
-								; FLAGS.CF==1 有错误，AH=错误号码（与重置（reset）功能一样）
-		JNC		next			; 没出错则跳转到fin
-								; 进位标志是0的话就跳转
-
-		ADD		SI,1			; 往SI加1
-		CMP		SI,5			; 比较SI与5
-		JAE		error			; SI >= 5 跳转到error
-
-		MOV		AH,0x00			; 系统复位：复位软盘状态，在读一次
-		MOV		DL,0x00			; A驱动器  DL数据寄存器低位
-		INT		0x13			; 重置驱动器
-
-		JMP		retry
-next:
-								; EX 附加段寄存器
-								; 把内存地址后移0x200（512/16十六进制转换）
-								; ADD ES,0x020因为没有ADD ES，只能通过AX进行
-		MOV		AX,ES			; 先将ES存入累加寄存器
-		ADD		AX,0x0020		; 累加寄存器+0x0020（=512/16）
-		MOV		ES,AX			; 将结果存入ES
-
-								; MOV AL,[ES:BX] 代表 ES*16+BX 的内存地址
-								; AL 累加寄存器低位
-								; 可以省略默认的段寄存器DS，即 MOV AL,[DS:SI] == MOV AL,[SI]
-								; 因此，DS必须预先置0，否则地址的值就会加上DS*16
-								
-								; 读下一个扇区
-		ADD		CL,1			; 往CL里面加1
-		CMP		CL,18			; 比较CL与18
-		JBE		readloop		; CL <= 18 跳转到readloop
-
-								; 扇区置1，更换磁头2
-		MOV		CL,1
-		ADD		DH,1
-		CMP		DH,2
-		JB		readloop		; DH < 2 跳转到readloop
-
-								; 更换柱面
-		MOV		DH,0
-		ADD		CH,1
-		CMP		CH,CYLS
-		JB		readloop		; CH < CYLS 跳转到readloop
-
-; 读取完毕，跳转到haribote.sys执行！
-; 用二进制编辑器打开img可知
-; 文件名写在 0x002600 以后的地方
-; 文件的内容会写在 0x004200 以后的地方
-; 因为磁盘的内容装载在内存的0x8000号地址，那么0x4200就在内存的0x8000+0x4200=0xc200号地址
-		MOV		[0x0ff0],CH		; IPL跳转到asmbead.nas
+; 读取结束，运行haribote.sys
+		MOV		BYTE [0x0ff0],CYLS	; 记录IPL实际读取了多少内容
 		JMP		0xc200
 
 error:
+		MOV		AX,0
+		MOV		ES,AX
 		MOV		SI,msg
-
 putloop:
 		MOV		AL,[SI]
 		ADD		SI,1			; 给SI加1
@@ -138,17 +74,84 @@ putloop:
 		MOV		BX,15			; 指定字符颜色
 		INT		0x10			; 调用显卡BIOS
 		JMP		putloop
-
 fin:
 		HLT						; 让CPU停止，等待指令
 		JMP		fin				; 无限循环
-
 msg:
 		DB		0x0a, 0x0a		; 换行两次
 		DB		"load error"
 		DB		0x0a			; 换行
 		DB		0
+readfast:	; 使用AL尽量一次性读取数据
+;   ES：读取地址， CH：柱面， DH：磁头， CL：扇区， BX：读取扇区数
+		MOV		AX,ES			; <通过ES计算AL的最大值>
+		SHL		AX,3			; 将AX除以32，将结果存入AH（SHL是左移位指令）
+		AND		AH,0x7f			; AH是AH除以128所得的余数（512*128=64k）
+		MOV		AL,128			; AL = 128 - AH; AH是AH除以128所得的余数（512*128=64K）
+		SUB		AL,AH
 
+		MOV		AH,BL			; <通过计算BX计算AL的最大值并存入AH>
+		CMP		BH,0			; if (BH != 0) { AH = 18; }
+		JE		.skip1
+		MOV		AH,18
+.skip1:
+		CMP		AL,AH			; if (AL > AH) { AL = AH; }
+		JBE		.skip2
+		MOV		AL,AH
+.skip2:
+		MOV		AH,19			; <通过CL计算AL的最大值并存入AH>
+		SUB		AH,CL			; AH = 19 - CL;
+		CMP		AL,AH			; if (AL > AH) { AL = AH; }
+		JBE		.skip3
+		MOV		AL,AH
+.skip3:
+		PUSH	BX
+		MOV		SI,0			; 计算失败次数的寄存器
+retry:
+		MOV		AH,0x02			; AH=0x02 : 读盘, AH=0x03 : 写盘, AH=0x04 : 校验, AH=0x0c : 寻道
+		MOV		BX,0
+		MOV		DL,0x00			; A驱动器  驱动器号
+		PUSH	ES
+		PUSH	DX
+		PUSH	CX
+		PUSH	AX
+		INT		0x13			; 调用磁盘BIOS 0x13中断向量指向的中断服务程序实质上就是磁盘服务程序
+		JNC		next			; 没出错则跳转到fin，进位标志是0的话就跳转
+		ADD		SI,1			; 往SI加1
+		CMP		SI,5			; 比较SI与5
+		JAE		error			; SI >= 5 跳转到error
+		MOV		AH,0x00			; 系统复位：复位软盘状态，在读一次
+		MOV		DL,0x00			; A驱动器  DL数据寄存器低位
+		INT		0x13			; 重置驱动器
+		POP		AX
+		POP		CX
+		POP		DX
+		POP		ES
+		JMP		retry
+next:
+		POP		AX
+		POP		CX
+		POP		DX
+		POP		BX				; 将ES的内容存入BX
+		SHR		BX,5			; 将BX由16字节为单位转化为512字节为单位
+		MOV		AH,0
+		ADD		BX,AX			; BX += AL;
+		SHL		BX,5			; 将BX由512字节为单位转换为16字节为单位
+		MOV		ES,BX			; 相当于EX += AL * 0x20
+		POP		BX
+		SUB		BX,AX
+		JZ		.ret
+		ADD		CL,AL			; 将CL加上AL
+		CMP		CL,18			; 将CL与18比较
+		JBE		readfast		; CL <= 18 则跳转至readfast
+		MOV		CL,1
+		ADD		DH,1
+		CMP		DH,2
+		JB		readfast		; DH < 2 则跳转至readfast
+		MOV		DH,0
+		ADD		CH,1
+		JMP		readfast
+.ret:
+		RET
 		RESB	0x7dfe-$		; 填写0x00直到0x001fe
-
 		DB		0x55, 0xaa
